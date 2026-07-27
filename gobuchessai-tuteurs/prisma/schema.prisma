@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Utilisateur {
+  idutilisateur Int          @id @default(autoincrement())
+  nom           String
+  prenom        String
+  motpasse      String
+  nomuser       String       @unique
+  genre         String?
+  datenaiss     String?
+  numtelsimpl   String?
+  numtelwh      String?
+  date          String?
+  heure         String?
+  enseignant    Enseignant?
+  demandes      Demande[]
+
+  @@map("utilisateur")
+}
+
+model Admin {
+  idamin   Int    @id @default(autoincrement())
+  emailadm String @unique
+  mtpadm   String
+
+  @@map("admin")
+}
+
+model Enseignant {
+  idutilisateur Int             @id
+  photo         String?
+  cni           String?
+  planlocal     String?
+  ville         String?
+  quartier      String?
+  dispo         String?
+  utilisateur   Utilisateur     @relation(fields: [idutilisateur], references: [idutilisateur])
+  ensmatclas    Ensmatclas[]
+  estsollicitee Estsollicitee[]
+
+  @@map("enseignant")
+}
+
+model Classe {
+  idclasse   Int          @id @default(autoincrement())
+  nomclasse  String
+  demandes   Demande[]
+  ensmatclas Ensmatclas[]
+
+  @@map("classe")
+}
+
+model Matiere {
+  idmatiere     Int             @id @default(autoincrement())
+  nomatiere     String
+  ensmatclas    Ensmatclas[]
+  estsollicitee Estsollicitee[]
+
+  @@map("matiere")
+}
+
+model Ensmatclas {
+  idensmatclas  Int        @id @default(autoincrement())
+  idutilisateur Int
+  idmat         Int
+  idclas        Int
+  enseignant    Enseignant @relation(fields: [idutilisateur], references: [idutilisateur])
+  matiere       Matiere    @relation(fields: [idmat], references: [idmatiere])
+  classe        Classe     @relation(fields: [idclas], references: [idclasse])
+
+  @@map("ensmatclas")
+}
+
+model Demande {
+  idemande      Int             @id @default(autoincrement())
+  genresouh     String?
+  date          String?
+  heure         String?
+  idclasse      Int
+  idutilisateur Int
+  idmomentouch  Int?
+  lieusouh      String?
+  classe        Classe          @relation(fields: [idclasse], references: [idclasse])
+  utilisateur   Utilisateur     @relation(fields: [idutilisateur], references: [idutilisateur])
+  estsollicitee Estsollicitee[]
+
+  @@map("demande")
+}
+
+model Estsollicitee {
+  idestsollicitee Int        @id @default(autoincrement())
+  idemande        Int
+  idenseign       Int
+  idmatiere       Int
+  duree           String?
+  horairedeb      String?
+  jourcours       String?
+  th              String?
+  decision        String?    @default("0")
+  montant         String?
+  tauxensei       String?
+  montantensei    String?
+  date            String?
+  heure           String?
+  datemod         String?
+  heuremod        String?
+  demande         Demande    @relation(fields: [idemande], references: [idemande])
+  enseignant      Enseignant @relation(fields: [idenseign], references: [idutilisateur])
+  matiere         Matiere    @relation(fields: [idmatiere], references: [idmatiere])
+  seances         Seance[]
+
+  @@map("estsollicitee")
+}
+
+model Seance {
+  idseance        Int           @id @default(autoincrement())
+  idestsollicitee Int
+  decisionsea     String?
+  nomdeb          String?
+  statutdeb       String?
+  nomfin          String?
+  statutfin       String?
+  idenseign       String?
+  dateseance      String?
+  heuredeb        String?
+  heurefin        String?
+  duree           String?
+  taux            String?
+  total           String?
+  decision        String?
+  estsollicitee   Estsollicitee @relation(fields: [idestsollicitee], references: [idestsollicitee])
+
+  @@map("seance")
+}
