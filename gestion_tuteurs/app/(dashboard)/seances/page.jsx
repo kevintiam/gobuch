@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
+import { requireRole } from "@/lib/guards";
+
 export default async function SeancesPage() {
+  // Toutes les seances et leurs montants : administration seule.
+  await requireRole("admin");
+
   const seances = await prisma.seance.findMany({
     include: {
       estsollicitee: {

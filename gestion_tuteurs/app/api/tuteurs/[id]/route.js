@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { guardApi } from "@/lib/guards";
 
 export async function GET(_req, { params }) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const { error } = await guardApi("admin");
+  if (error) return error;
 
   const { id } = await params;
   const tuteur = await prisma.enseignant.findUnique({
@@ -24,10 +24,16 @@ export async function GET(_req, { params }) {
 }
 
 export async function PATCH(req, { params }) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  // Un administrateur modifie n'importe quelle fiche ; un enseignant ne peut
+  // modifier que la sienne.
+  const { error, session, role } = await guardApi("admin", "enseignant");
+  if (error) return error;
 
   const { id } = await params;
+  if (role === "enseignant" && String(session.user?.id) !== String(id)) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
   const body = await req.json();
   const { dispo, ville, quartier } = body;
 

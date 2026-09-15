@@ -1,77 +1,164 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
-const navItems = [
-  {
-    href: "/tuteurs",
-    label: "Tuteurs",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/demandes",
-    label: "Demandes",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-  },
-  {
-    href: "/seances",
-    label: "Séances",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-];
+import {
+  FiHome,
+  FiUser,
+  FiUsers,
+  FiClipboard,
+  FiCalendar,
+  FiGrid,
+  FiFileText,
+  FiFolder,
+  FiBarChart2,
+  FiLogOut,
+} from "react-icons/fi";
 
-export default function Sidebar() {
+// La navigation depend du role : /tuteurs, /demandes et /seances listent tous
+// les tuteurs, toutes les demandes et tous les montants — c'est de
+// l'administration, pas l'espace d'un tuteur. Masquer les liens ne suffit
+// evidemment pas : la vraie garde est dans lib/guards.ts, cote serveur.
+const NAV_PAR_ROLE = {
+  eleve: [{ href: "/eleve", label: "Mon espace", Icone: FiHome }],
+  enseignant: [
+    { href: "/tuteur", label: "Mon espace", Icone: FiHome, section: "Vue d'ensemble" },
+    { href: "/profil", label: "Mon profil", Icone: FiUser, section: "Vue d'ensemble" },
+    { href: "/mes-demandes", label: "Mes demandes", Icone: FiClipboard, section: "Vue d'ensemble" },
+    { href: "/calendrier", label: "Mon calendrier", Icone: FiGrid, section: "Vue d'ensemble" },
+    { href: "/mes-seances", label: "Mes séances", Icone: FiCalendar, section: "Mon travail" },
+    { href: "/contrats", label: "Contrats disponibles", Icone: FiFileText, section: "Mon travail" },
+    { href: "/mes-contrats", label: "Mes contrats", Icone: FiFolder, section: "Mon travail" },
+    { href: "/mes-rapports", label: "Mes rapports", Icone: FiBarChart2, section: "Mon travail" },
+  ],
+  admin: [
+    { href: "/tuteurs", label: "Tuteurs", Icone: FiUsers },
+    { href: "/demandes", label: "Demandes", Icone: FiClipboard },
+    { href: "/seances", label: "Séances", Icone: FiCalendar },
+  ],
+};
+
+const SOUS_TITRE_PAR_ROLE = {
+  eleve: "Espace élève",
+  enseignant: "Espace tuteurs",
+  admin: "Administration",
+};
+
+// Regroupe en conservant l'ordre de declaration. Object.groupBy n'est pas
+// utilise : il demande un runtime plus recent que la cible du projet.
+const parSection = (items) => {
+  const groupes = [];
+  for (const item of items) {
+    const titre = item.section ?? "";
+    const dernier = groupes[groupes.length - 1];
+    if (dernier && dernier.titre === titre) dernier.items.push(item);
+    else groupes.push({ titre, items: [item] });
+  }
+  return groupes;
+};
+
+const initiales = (nom) =>
+  (nom ?? "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((mot) => mot[0])
+    .join("")
+    .toUpperCase() || "?";
+
+export default function Sidebar({ role, nom }) {
   const pathname = usePathname();
+  const groupes = parSection(NAV_PAR_ROLE[role] ?? []);
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-blue-600">Gobuch</h1>
-        <p className="text-xs text-gray-500 mt-1">Gestion des tuteurs</p>
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-brand-900 text-brand-100">
+      {/* Marque */}
+      <div className="flex items-center gap-2.5 px-5 py-6">
+        <Image
+          src="/logo.png"
+          alt="Logo Gobuch"
+          width={36}
+          height={36}
+          className="h-9 w-9 rounded-xl bg-white/95 object-contain p-1"
+        />
+        <div className="leading-tight">
+          <p
+            className="text-lg font-black text-white"
+            style={{ fontFamily: "var(--font-nunito), sans-serif" }}
+          >
+            Gobuch
+          </p>
+          <p className="text-[11px] font-medium text-brand-300">
+            {SOUS_TITRE_PAR_ROLE[role] ?? "Tableau de bord"}
+          </p>
+        </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          );
-        })}
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        {groupes.map((groupe) => (
+          <div key={groupe.titre || "sans-section"}>
+            {groupe.titre && (
+              <p className="px-3 pt-5 pb-2 text-[16px] font-bold uppercase tracking-[0.12em] text-brand-400">
+                {groupe.titre}
+              </p>
+            )}
+            {groupe.items.map(({ href, label, Icone }) => {
+              const isActive =
+                pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`group relative mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-[16px] font-medium transition-colors duration-200 ${
+                    isActive
+                      ? "bg-white/10 text-white"
+                      : "text-brand-200 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {/* Repere de la page courante */}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent-400 transition-opacity duration-200 ${
+                      isActive ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  <Icone
+                    className="h-4.5 w-4.5 shrink-0"
+                  />
+                  <span className="truncate">{label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      {/* Compte connecte */}
+      <div className="border-t border-white/10 p-3">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-white">
+            {initiales(nom)}
+          </span>
+          <div className="min-w-0 leading-tight">
+            <p className="truncate text-sm font-semibold text-white">
+              {nom ?? "Compte"}
+            </p>
+            <p className="text-[11px] text-brand-300">
+              {SOUS_TITRE_PAR_ROLE[role] ?? ""}
+            </p>
+          </div>
+        </div>
+
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+          className="mt-1 flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-brand-200 transition-colors duration-200 hover:bg-red-500/15 hover:text-red-200"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <FiLogOut className="h-4.5 w-4.5 shrink-0" />
           Déconnexion
         </button>
       </div>

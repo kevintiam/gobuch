@@ -6,10 +6,69 @@
 }
 
 @theme inline {
+  /* ---- Palette de marque : bleu royal (ex-violet) ---- */
+  --color-brand-50: #f2f4fd;
+  --color-brand-100: #e3e8fa;
+  --color-brand-200: #c8d2f4;
+  --color-brand-300: #9eb0ea;
+  --color-brand-400: #758ee1;
+  --color-brand-500: #4a6dd8; /* Bleu moyen */
+  --color-brand-600: #2d4db4; /* Bleu royal */
+  --color-brand-700: #223c91;
+  --color-brand-800: #172a6e;
+  --color-brand-900: #0c1847; /* Dark navy */
+  --color-brand-950: #070e2c;
+
+  /* ---- Palette d'accent : orange (ex-amber) ---- */
+  --color-accent-50: #fef8ee;
+  --color-accent-100: #fdedd3;
+  --color-accent-200: #fbdba7;
+  --color-accent-300: #f9c167;
+  --color-accent-400: #f5a623; /* Orange clair */
+  --color-accent-500: #e8920a; /* Orange */
+  --color-accent-600: #ca7c07;
+  --color-accent-700: #a26107;
+  --color-accent-800: #7d4a08;
+  --color-accent-900: #633a08;
+  --color-accent-950: #3a2104;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Chargees via next/font (layout.jsx) */
+  --font-display: var(--font-nunito);
+  --font-hand: var(--font-coming-soon);
+
+  /* Chargees via l'@import Google Fonts ci-dessus */
+  --font-acme: "Acme", sans-serif;
+  --font-bpmf: "Bpmf Iansui", serif;
+  --font-charmonman: "Charmonman", cursive;
+  --font-comic: "Comic Neue", cursive;
+  --font-comme: "Comme", sans-serif;
+  --font-delius: "Delius", cursive;
+  --font-elsie: "Elsie Swash Caps", serif;
+  --font-epunda: "Epunda Sans", sans-serif;
+  --font-felipa: "Felipa", cursive;
+  --font-indie: "Indie Flower", cursive;
+  --font-inter: "Inter", sans-serif;
+  --font-jetbrains: "JetBrains Mono", monospace;
+  --font-spartan: "League Spartan", sans-serif;
+  --font-merienda: "Merienda", cursive;
+  --font-mona: "Mona Sans", sans-serif;
+  --font-noto: "Noto Sans", sans-serif;
+  --font-noto-kr: "Noto Sans KR", sans-serif;
+  --font-nunito-sans: "Nunito Sans", sans-serif;
+  --font-playpen: "Playpen Sans", cursive;
+  --font-quintessential: "Quintessential", cursive;
+  --font-roboto: "Roboto", sans-serif;
+  --font-sn-pro: "SN Pro", sans-serif;
+  --font-shantell: "Shantell Sans", cursive;
+  --font-sofia: "Sofia", cursive;
+  --font-space-mono: "Space Mono", monospace;
+  --font-tangerine: "Tangerine", cursive;
+  --font-ysabeau: "Ysabeau Infant", serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +81,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

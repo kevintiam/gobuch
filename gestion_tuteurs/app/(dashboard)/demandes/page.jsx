@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
+import { requireRole } from "@/lib/guards";
+
 export default async function DemandesPage() {
+  // Toutes les demandes de tous les eleves : administration seule.
+  await requireRole("admin");
+
   const demandes = await prisma.demande.findMany({
     include: {
       utilisateur: true,
@@ -74,7 +79,7 @@ export default async function DemandesPage() {
                       className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
+                        <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 text-xs font-bold">
                           {es.enseignant.utilisateur.prenom[0]}{es.enseignant.utilisateur.nom[0]}
                         </div>
                         <div>

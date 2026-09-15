@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
+import { requireRole } from "@/lib/guards";
+
 export default async function TuteursPage() {
+  // Liste tous les tuteurs, numeros de telephone compris : administration seule.
+  await requireRole("admin");
+
   const tuteurs = await prisma.enseignant.findMany({
     include: {
       utilisateur: true,
@@ -39,10 +44,10 @@ export default async function TuteursPage() {
               <Link
                 key={tuteur.idutilisateur}
                 href={`/tuteurs/${tuteur.idutilisateur}`}
-                className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-200 transition-all"
+                className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-brand-200 transition-all"
               >
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-lg flex-shrink-0">
                     {tuteur.utilisateur.prenom[0]}{tuteur.utilisateur.nom[0]}
                   </div>
                   <div>
@@ -58,7 +63,7 @@ export default async function TuteursPage() {
                     <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide font-medium">Matières</p>
                     <div className="flex flex-wrap gap-1">
                       {matieres.map((m) => (
-                        <span key={m} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full">
+                        <span key={m} className="px-2 py-0.5 bg-brand-50 text-brand-700 text-xs rounded-full">
                           {m}
                         </span>
                       ))}

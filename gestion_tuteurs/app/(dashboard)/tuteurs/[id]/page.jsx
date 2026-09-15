@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+
+import { requireRole } from "@/lib/guards";
 import Link from "next/link";
 
 export default async function TuteurDetailPage({ params }) {
+  await requireRole("admin");
+
   const { id } = await params;
   const tuteur = await prisma.enseignant.findUnique({
     where: { idutilisateur: Number(id) },
@@ -40,13 +44,13 @@ export default async function TuteurDetailPage({ params }) {
 
   return (
     <div className="max-w-4xl">
-      <Link href="/tuteurs" className="text-sm text-blue-600 hover:underline mb-6 inline-block">
+      <Link href="/tuteurs" className="text-sm text-brand-600 hover:underline mb-6 inline-block">
         ← Retour à la liste
       </Link>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <div className="flex items-start gap-6">
-          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-3xl flex-shrink-0">
+          <div className="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-3xl flex-shrink-0">
             {u.prenom[0]}{u.nom[0]}
           </div>
           <div className="flex-1">
