@@ -24,6 +24,7 @@ export type TuteurDashboard = {
   sollicitations: SollicitationAvecDemande[];
   seancesAVenir: Seance[];
   seancesPassees: Seance[];
+  // role:string;
   stats: {
     demandesRecues: number;
     enAttente: number;
@@ -35,7 +36,9 @@ export type TuteurDashboard = {
 const memeEnseignant = (
   t: Tuteur,
   e: { utilisateur: { nom: string; prenom: string } },
-) => e.utilisateur.nom === t.utilisateur.nom && e.utilisateur.prenom === t.utilisateur.prenom;
+) =>
+  e.utilisateur.nom === t.utilisateur.nom &&
+  e.utilisateur.prenom === t.utilisateur.prenom;
 
 export function getTuteurDashboard(
   idutilisateur: number,
@@ -44,10 +47,11 @@ export function getTuteurDashboard(
   const tuteur = TUTEURS.find((t) => t.idutilisateur === idutilisateur);
   if (!tuteur) return null;
 
-  const sollicitations: SollicitationAvecDemande[] = DEMANDES.flatMap((demande) =>
-    demande.estsollicitee
-      .filter((s) => memeEnseignant(tuteur, s.enseignant))
-      .map((sollicitation) => ({ sollicitation, demande })),
+  const sollicitations: SollicitationAvecDemande[] = DEMANDES.flatMap(
+    (demande) =>
+      demande.estsollicitee
+        .filter((s) => memeEnseignant(tuteur, s.enseignant))
+        .map((sollicitation) => ({ sollicitation, demande })),
   );
 
   const idsSollicitations = new Set(
@@ -64,10 +68,13 @@ export function getTuteurDashboard(
     sollicitations,
     seancesAVenir: seances.filter((s) => (s.dateseance ?? "") >= aujourdhui),
     seancesPassees: seances.filter((s) => (s.dateseance ?? "") < aujourdhui),
+    // role:tuteur.utilisateur.role,
     stats: {
       demandesRecues: sollicitations.length,
-      enAttente: sollicitations.filter((s) => s.sollicitation.decision === "0").length,
-      acceptees: sollicitations.filter((s) => s.sollicitation.decision === "1").length,
+      enAttente: sollicitations.filter((s) => s.sollicitation.decision === "0")
+        .length,
+      acceptees: sollicitations.filter((s) => s.sollicitation.decision === "1")
+        .length,
       // Seules les seances validees sont comptees comme encaissees.
       revenus: seances
         .filter((s) => s.decisionsea === "1")

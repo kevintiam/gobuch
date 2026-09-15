@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
         />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Acme&family=Bpmf+Iansui&family=Charmonman:wght@400;700&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Coming+Soon&family=Comme:wght@100..900&family=Delius&family=Elsie+Swash+Caps:wght@400;900&family=Epunda+Sans:ital,wght@0,300..900;1,300..900&family=Felipa&family=Indie+Flower&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=League+Spartan:wght@100..900&family=Merienda:wght@300..900&family=Mona+Sans:ital,wght@0,200..900;1,200..900&family=Noto+Sans+KR:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Playpen+Sans&family=Quintessential&family=Roboto:ital,wght@0,100..900;1,100..900&family=SN+Pro:ital,wght@0,200..900;1,200..900&family=Shantell+Sans:ital,wght,BNCE@0,300..800,-20;1,300..800,-20&family=Sofia&family=Space+Mono:wght@700&family=Tangerine:wght@400;700&family=Ysabeau+Infant:ital,wght@0,1..1000;1,1..1000&display=swap" />
       </head>
-      <body className="min-h-full bg-gray-50 flex flex-col">{children}</body>
+      <body className="h-full bg-gray-50 flex flex-col">{children}</body>
     </html>
   );
 }
