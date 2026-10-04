@@ -5,7 +5,15 @@ import Sidebar from "@/components/Sidebar";
 import Header from "./header";
 
 
-export default function DashboardShell({ role, nom, children }) {
+export default function DashboardShell({
+  role,
+  nom,
+  children,
+}: {
+  role?: string;
+  nom?: string;
+  children: React.ReactNode;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (

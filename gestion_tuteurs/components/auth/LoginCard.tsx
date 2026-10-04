@@ -1,25 +1,22 @@
 "use client";
-
-import { useState, type ReactNode } from "react";
+import { useState, type SubmitEvent } from "react";
+import { isValidEmail } from "@/lib/validation";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiLoader, FiPhone, FiChevronLeft } from "react-icons/fi";
+import {
+  FiMail,
+  FiLock,
+  FiEye,
+  FiEyeOff,
+  FiLoader,
+  FiPhone,
+  FiChevronLeft,
+} from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { homeForRole } from "@/lib/roles";
-
-
-interface Props {
-  pageBg: string;
-  gradient: string;
-  title: string;
-  subtitle: string;
-  identifierLabel: string;
-  identifierPlaceholder?: string;
-  showSocialLogins?: boolean;
-  footerSlot?: ReactNode;
-}
+import type { LoginInterface } from "./../interface";
 
 const FIELD =
   "w-full pl-10 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:bg-white transition-all placeholder-slate-400";
@@ -30,58 +27,67 @@ export default function LoginCard({
   title,
   subtitle,
   identifierLabel,
-  identifierPlaceholder = "nomutilisateur ou adresse e-mail",
+  emailPlaceholder = "Adresse e-mail",
   showSocialLogins = false,
   footerSlot,
-}: Props) {
+}: LoginInterface) {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "forgot">("login");
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Le champ accepte un nom d'utilisateur ou un email : c'est authorize()
-    // dans lib/auth.js qui determine le compte et le role correspondants.
+    if (!isValidEmail(email)) {
+      setLoading(false);
+      setError("Mauvais format d'adresse e-mail.");
+      return;
+    }
+
     const result = await signIn("credentials", {
-      nomuser: form.email,
-      motpasse: form.password,
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
       redirect: false,
     });
 
     if (result?.error) {
       setLoading(false);
-      setError(
-        "Identifiants incorrects. Verifie ton identifiant et ton mot de passe.",
-      );
+      setError("Identifiants incorrects.");
+      return;
+    }
+    const session = await getSession();
+
+    if (!session?.user?.role) {
+      setLoading(false);
+      setError("Impossible de récupérer la session.");
       return;
     }
 
-    // La destination suit le role reel du compte, pas la page utilisee pour se
-    // connecter : un eleve qui arrive ici n'est jamais bloque, il est renvoye
-    // vers son espace.
-    const session = await getSession();
-    router.push(homeForRole(session?.user?.role));
+    router.replace(homeForRole(session.user.role));
+    router.refresh();
   };
 
-  const handleForgot = (e: React.FormEvent) => {
+  const handleForgot = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSent(true);
+    alert(
+      "La réinitialisation par e-mail n'est pas encore active. Contacte un administrateur pour retrouver ton accès.",
+    );
   };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: pageBg }}>
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 overflow-y-auto">
         <div className="w-full lg:max-w-xl bg-white rounded-3xl shadow-lg px-8 py-10 lg:px-12 lg:py-14">
-          <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 mb-8"
+          >
             <Image
               src="/logo.png"
               alt="Logo Gobuch"
@@ -95,14 +101,15 @@ export default function LoginCard({
           {mode === "login" && (
             <>
               <div className="mb-8 text-center">
-            
                 <h1
                   className="text-2xl font-black text-slate-900"
                   style={{ fontFamily: "var(--font-nunito), sans-serif" }}
                 >
                   {title}
                 </h1>
-                <p className="text-slate-500 text-[1.125rem] mt-1">{subtitle}</p>
+                <p className="text-slate-500 text-[1.125rem] mt-1">
+                  {subtitle}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,13 +124,13 @@ export default function LoginCard({
                     <FiMail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       id="identifiant"
-                      name="username"
-                      autoComplete="username"
-                      type="text"
+                      name="email"
+                      autoComplete="email"
+                      type="email"
                       required
-                      value={form.email}
-                      onChange={(e) => set("email", e.target.value)}
-                      placeholder={identifierPlaceholder}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={emailPlaceholder}
                       className={`${FIELD} pr-4 text-[1rem]`}
                     />
                   </div>
@@ -153,8 +160,8 @@ export default function LoginCard({
                       autoComplete="current-password"
                       type={showPwd ? "text" : "password"}
                       required
-                      value={form.password}
-                      onChange={(e) => set("password", e.target.value)}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       className={`${FIELD} pr-11 text-[1.125rem]`}
                     />
@@ -193,7 +200,6 @@ export default function LoginCard({
                     role="alert"
                     className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
                   >
-                    <span aria-hidden="true">⚠️</span>
                     <span>{error}</span>
                   </div>
                 )}
@@ -227,7 +233,10 @@ export default function LoginCard({
 
                   <div className="flex gap-3 mt-4">
                     {[
-                      { label: "Google", icon: <FcGoogle className="w-5 h-5" /> },
+                      {
+                        label: "Google",
+                        icon: <FcGoogle className="w-5 h-5" />,
+                      },
                       {
                         label: "Téléphone",
                         icon: <FiPhone className="w-5 h-5" />,
@@ -236,8 +245,6 @@ export default function LoginCard({
                       <button
                         key={b.label}
                         type="button"
-                        disabled
-                        title="Bientot disponible"
                         className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-slate-200 py-3 rounded-xl text-sm font-semibold text-slate-700 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {b.icon}
@@ -276,16 +283,6 @@ export default function LoginCard({
                 </p>
               </div>
 
-              {sent && (
-                <div
-                  role="status"
-                  className="mb-4 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800"
-                >
-                  La reinitialisation par e-mail n&apos;est pas encore active.
-                  Contacte un administrateur pour retrouver ton acces.
-                </div>
-              )}
-
               <form onSubmit={handleForgot} className="space-y-4">
                 <div>
                   <label
@@ -300,8 +297,8 @@ export default function LoginCard({
                       id="email-reset"
                       type="email"
                       required
-                      value={form.email}
-                      onChange={(e) => set("email", e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="email@exemple.com"
                       className={`${FIELD} pr-4 text-[16px]`}
                     />
@@ -310,10 +307,18 @@ export default function LoginCard({
 
                 <button
                   type="submit"
+                  disabled={loading}
                   className="w-full font-black cursor-pointer text-white py-3.5 rounded-2xl transition-all hover:opacity-90 hover:shadow-xl disabled:opacity-60"
                   style={{ background: gradient }}
                 >
-                  Envoyer le lien de réinitialisation
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <FiLoader className="animate-spin w-4 h-4" />
+                      <span>Envoi en cours...</span>
+                    </span>
+                  ) : (
+                    "Envoyer le lien de réinitialisation"
+                  )}
                 </button>
               </form>
             </>

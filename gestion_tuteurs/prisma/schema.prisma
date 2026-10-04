@@ -3,139 +3,225 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+
+  // Supabase expose deux acces :
+  //  - url       : le pooler (pgBouncer, port 6543) pour les requetes de l'app
+  //  - directUrl : la connexion directe (port 5432) pour les migrations, qui
+  //                ont besoin de transactions que le pooler ne permet pas
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model Utilisateur {
-  idutilisateur Int          @id @default(autoincrement())
-  nom           String
-  prenom        String
-  motpasse      String
-  nomuser       String       @unique
-  genre         String?
-  datenaiss     String?
-  numtelsimpl   String?
-  numtelwh      String?
-  date          String?
-  heure         String?
-  enseignant    Enseignant?
-  demandes      Demande[]
-
-  @@map("utilisateur")
+enum Role {
+  STUDENT
+  TUTOR
+  ADMIN
 }
 
-model Admin {
-  idamin   Int    @id @default(autoincrement())
-  emailadm String @unique
-  mtpadm   String
+model User {
+  id           Int    @id @default(autoincrement())
+  email        String @unique
+  passwordHash String
+  role         Role   @default(STUDENT)
 
-  @@map("admin")
+  lastName  String
+  firstName String
+  gender    String?
+  phone     String?
+  whatsapp  String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tutor        Tutor?
+  student      Student?
+  requests     Request[]
+  reviewsGiven Review[]  @relation("ReviewAuthor")
+
+  @@map("users")
 }
 
-model Enseignant {
-  idutilisateur Int             @id
-  photo         String?
-  cni           String?
-  planlocal     String?
-  ville         String?
-  quartier      String?
-  dispo         String?
-  utilisateur   Utilisateur     @relation(fields: [idutilisateur], references: [idutilisateur])
-  ensmatclas    Ensmatclas[]
-  estsollicitee Estsollicitee[]
+model Tutor {
+  userId Int  @id
+  user   User @relation(fields: [userId], references: [id])
 
-  @@map("enseignant")
+  bio          String? @db.Text
+  photo        String?
+  locationMap  String?
+  city         String?
+  district     String?
+  availability String?
+
+  isVerified Boolean   @default(false)
+  verifiedAt DateTime?
+
+  assignments TeachingAssignment[]
+  applications TutorApplication[]
+  contracts   Contract[]
+  reviews     Review[]             @relation("ReviewTutor")
+
+  @@map("tutors")
 }
 
-model Classe {
-  idclasse   Int          @id @default(autoincrement())
-  nomclasse  String
-  demandes   Demande[]
-  ensmatclas Ensmatclas[]
+model Student {
+  userId  Int     @id
+  user    User    @relation(fields: [userId], references: [id])
+  levelId Int?
+  level   Level?  @relation(fields: [levelId], references: [id])
+  school  String?
 
-  @@map("classe")
+  @@map("students")
 }
 
-model Matiere {
-  idmatiere     Int             @id @default(autoincrement())
-  nomatiere     String
-  ensmatclas    Ensmatclas[]
-  estsollicitee Estsollicitee[]
+model Level {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  cycle     String?
+  sortOrder Int     @default(0)
 
-  @@map("matiere")
+  students    Student[]
+  requests    Request[]
+  assignments TeachingAssignment[]
+
+  @@map("levels")
 }
 
-model Ensmatclas {
-  idensmatclas  Int        @id @default(autoincrement())
-  idutilisateur Int
-  idmat         Int
-  idclas        Int
-  enseignant    Enseignant @relation(fields: [idutilisateur], references: [idutilisateur])
-  matiere       Matiere    @relation(fields: [idmat], references: [idmatiere])
-  classe        Classe     @relation(fields: [idclas], references: [idclasse])
+model Subject {
+  id   Int    @id @default(autoincrement())
+  name String @unique
 
-  @@map("ensmatclas")
+  assignments TeachingAssignment[]
+  requests    Request[]
+
+  @@map("subjects")
 }
 
-model Demande {
-  idemande      Int             @id @default(autoincrement())
-  genresouh     String?
-  date          String?
-  heure         String?
-  idclasse      Int
-  idutilisateur Int
-  idmomentouch  Int?
-  lieusouh      String?
-  classe        Classe          @relation(fields: [idclasse], references: [idclasse])
-  utilisateur   Utilisateur     @relation(fields: [idutilisateur], references: [idutilisateur])
-  estsollicitee Estsollicitee[]
+model TeachingAssignment {
+  id        Int     @id @default(autoincrement())
+  tutorId   Int
+  subjectId Int
+  levelId   Int
+  tutor     Tutor   @relation(fields: [tutorId], references: [userId])
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  level     Level   @relation(fields: [levelId], references: [id])
 
-  @@map("demande")
+  @@unique([tutorId, subjectId, levelId])
+  @@map("teaching_assignments")
 }
 
-model Estsollicitee {
-  idestsollicitee Int        @id @default(autoincrement())
-  idemande        Int
-  idenseign       Int
-  idmatiere       Int
-  duree           String?
-  horairedeb      String?
-  jourcours       String?
-  th              String?
-  decision        String?    @default("0")
-  montant         String?
-  tauxensei       String?
-  montantensei    String?
-  date            String?
-  heure           String?
-  datemod         String?
-  heuremod        String?
-  demande         Demande    @relation(fields: [idemande], references: [idemande])
-  enseignant      Enseignant @relation(fields: [idenseign], references: [idutilisateur])
-  matiere         Matiere    @relation(fields: [idmatiere], references: [idmatiere])
-  seances         Seance[]
-
-  @@map("estsollicitee")
+enum RequestStatus {
+  OPEN
+  FULFILLED
+  CANCELLED
 }
 
-model Seance {
-  idseance        Int           @id @default(autoincrement())
-  idestsollicitee Int
-  decisionsea     String?
-  nomdeb          String?
-  statutdeb       String?
-  nomfin          String?
-  statutfin       String?
-  idenseign       String?
-  dateseance      String?
-  heuredeb        String?
-  heurefin        String?
-  duree           String?
-  taux            String?
-  total           String?
-  decision        String?
-  estsollicitee   Estsollicitee @relation(fields: [idestsollicitee], references: [idestsollicitee])
+enum TutorApplicationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
 
-  @@map("seance")
+enum PaymentStatus {
+  DUE
+  PAID
+  CANCELLED
+}
+
+model Request {
+  id              Int           @id @default(autoincrement())
+
+  studentId       Int
+  student         User          @relation(fields: [studentId], references: [id])
+
+  levelId         Int
+  level           Level         @relation(fields: [levelId], references: [id])
+
+  subjectId       Int
+  subject         Subject       @relation(fields: [subjectId], references: [id])
+
+  preferredGender String?
+  preferredPlace  String?
+  preferredDays   String?
+  preferredTime   String?
+  durationMin     Int?
+  offeredAmount   Decimal       @db.Decimal(10, 2)
+
+  status          RequestStatus @default(OPEN)
+  createdAt       DateTime      @default(now())
+
+  applications    TutorApplication[]
+
+  @@index([status, createdAt])
+  @@map("requests")
+}
+
+model TutorApplication {
+  id         Int               @id @default(autoincrement())
+
+  requestId  Int
+  request    Request           @relation(fields: [requestId], references: [id])
+
+  tutorId    Int
+  tutor      Tutor             @relation(fields: [tutorId], references: [userId])
+
+  status     TutorApplicationStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  reviewedAt DateTime?
+
+  contract   Contract?
+
+  @@unique([requestId, tutorId])
+  @@index([tutorId, status])
+  @@map("applications")
+}
+
+model Contract {
+  id         Int      @id @default(autoincrement())
+  applicationId Int              @unique
+  application   TutorApplication @relation(fields: [applicationId], references: [id])
+  
+  tutorId    Int
+  tutor      Tutor    @relation(fields: [tutorId], references: [userId])
+
+  reference      String    @unique
+  amount         Decimal   @db.Decimal(10, 2)
+
+  startDate      DateTime  @db.Date
+  endDate        DateTime? @db.Date
+  plannedLessons Int?
+  signedAt       DateTime?
+
+  payments Payment[]
+
+  @@map("contracts")
+}
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  contractId Int
+  contract   Contract      @relation(fields: [contractId], references: [id])
+  // Versement partiel ou total impute sur contract.amount.
+  amount     Decimal       @db.Decimal(10, 2)
+  status     PaymentStatus @default(DUE)
+  method     String? // "Mobile Money", "Cash"
+  paidAt     DateTime?
+
+  @@map("payments")
+}
+
+model Review {
+  id       Int   @id @default(autoincrement())
+  tutorId  Int
+  authorId Int
+  tutor    Tutor @relation("ReviewTutor", fields: [tutorId], references: [userId])
+  author   User  @relation("ReviewAuthor", fields: [authorId], references: [id])
+
+  rating    Int // 1..5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@unique([tutorId, authorId])
+  @@map("reviews")
 }

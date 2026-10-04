@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import type { IconType } from "react-icons";
+import type { Role } from "@/lib/roles";
 
 import {
   FiHome,
@@ -18,9 +20,18 @@ import {
   FiLogOut,
 } from "react-icons/fi";
 
-const NAV_PAR_ROLE = {
+type NavItem = {
+  href: string;
+  label: string;
+  Icone: IconType;
+  section?: string;
+};
+
+type Groupe = { titre: string; items: NavItem[] };
+
+const NAV_PAR_ROLE: Record<Role, NavItem[]> = {
   eleve: [{ href: "/eleve", label: "Mon espace", Icone: FiHome }],
-  enseignant: [
+  tutor: [
     {
       href: "/tuteur",
       label: "Mon espace",
@@ -77,14 +88,14 @@ const NAV_PAR_ROLE = {
   ],
 };
 
-const SOUS_TITRE_PAR_ROLE = {
+const SOUS_TITRE_PAR_ROLE: Record<Role, string> = {
   eleve: "Espace élève",
-  enseignant: "Espace tuteurs",
+  tutor: "Espace tuteurs",
   admin: "Administration",
 };
 
-const parSection = (items) => {
-  const groupes = [];
+const parSection = (items: NavItem[]): Groupe[] => {
+  const groupes: Groupe[] = [];
   for (const item of items) {
     const titre = item.section ?? "";
     const dernier = groupes[groupes.length - 1];
@@ -94,18 +105,31 @@ const parSection = (items) => {
   return groupes;
 };
 
-const initiales = (nom) =>
+const initiales = (nom?: string) =>
   (nom ?? "")
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map((mot) => mot[0])
+    .map((mot: string) => mot[0])
     .join("")
     .toUpperCase() || "?";
 
-export default function Sidebar({ role, nom, open = false, onClose }) {
+export default function Sidebar({
+  role,
+  nom,
+  open = false,
+  onClose,
+}: {
+  role?: string;
+  nom?: string;
+  open?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
-  const items = NAV_PAR_ROLE[role] ?? [];
+  const roleConnu = (
+    role && role in NAV_PAR_ROLE ? role : undefined
+  ) as Role | undefined;
+  const items = roleConnu ? NAV_PAR_ROLE[roleConnu] : [];
   const groupes = parSection(items);
   const hrefActif = items
     .map((item) => item.href)
@@ -184,7 +208,7 @@ export default function Sidebar({ role, nom, open = false, onClose }) {
               {nom ?? "Compte"}
             </p>
             <p className="text-xs text-blue-400">
-              {SOUS_TITRE_PAR_ROLE[role] ?? ""}
+              {roleConnu ? SOUS_TITRE_PAR_ROLE[roleConnu] : ""}
             </p>
           </div>
           <div className="text-blue-400 hover:text-white transition-colors">

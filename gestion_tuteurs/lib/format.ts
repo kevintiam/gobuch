@@ -11,7 +11,9 @@ export const fcfa = (montant: number | string | null | undefined) =>
  *  construit donc la date a partir des trois nombres, en heure locale. */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "Date non renseignée";
-  const [annee, mois, jour] = iso.split("-").map(Number);
+  // slice(0, 10) : accepte aussi un horodatage complet ("2026-09-18T10:00:00Z"),
+  // forme sous laquelle Prisma serialise les DateTime.
+  const [annee, mois, jour] = iso.slice(0, 10).split("-").map(Number);
   if (!annee || !mois || !jour) return iso;
   const d = new Date(annee, mois - 1, jour);
   if (Number.isNaN(d.getTime())) return iso;

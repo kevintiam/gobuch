@@ -1,46 +1,28 @@
 import Link from "next/link";
-import StatutBadge from "@/components/dashboard/StatutBadge";
-import { getTuteurDashboard } from "@/data/selectors";
-import { fcfa, formatDate } from "@/lib/format";
+import {  type TuteurDashboard as TuteurDashboardData } from "@/data/selectors";
+import { fcfa } from "@/lib/format";
 import {
   FiInbox,
   FiClock,
   FiCheckCircle,
   FiDollarSign,
-  FiMapPin,
+  FiMail,
   FiCalendar,
   FiFileText,
   FiFolder,
-  FiChevronRight,
-  FiArrowRight,
-  FiAlertCircle,
-  FiBookOpen,
-  FiUser,
+  FiAlertCircle
 } from "react-icons/fi";
-import {Stat,Carte,Panneau,Tuile,LigneLien,Chip} from "@/lib/function";
-
-export type TuteurDashboardData = NonNullable<
-  ReturnType<typeof getTuteurDashboard>
->;
+import {Stat,Carte,Panneau,Tuile,Chip} from "@/lib/function";
 
 const NUNITO = { fontFamily: "var(--font-nunito), sans-serif" };
 
 /**
  * Affichage pur : recoit ses donnees, ne va rien chercher.
  */
-export default function TuteurDashboard({
-  data,
-}: {
-  data: TuteurDashboardData;
-}) {
-  const { tuteur, matieres, classes, sollicitations, seancesAVenir, stats } =
-    data;
-  const u = tuteur.utilisateur;
-
-  // "0" = en attente de reponse (voir StatutBadge / data/mockData).
-  const aTraiter = sollicitations.filter(
-    ({ sollicitation }) => sollicitation.decision === "0"
-  );
+export default function TuteurDashboard({ tutor }: { tutor: TuteurDashboardData }) {
+    const enAttente = tutor.request.filter(
+    (_, i) => tutor.applications[i]?.status === "PENDING",
+  )
 
   return (
     <div className="space-y-6">
@@ -51,7 +33,7 @@ export default function TuteurDashboard({
             className="text-2xl font-black tracking-tight text-slate-900 sm:text-[1.75rem]"
             style={NUNITO}
           >
-            Bonjour {u.prenom} 👋
+            Bonjour {tutor.name} 👋
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             Gérez vos séances et suivez votre progression.
@@ -60,16 +42,9 @@ export default function TuteurDashboard({
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600">
-            <FiMapPin className="h-3.5 w-3.5 text-slate-400" />
-            {tuteur.ville ?? "Ville non renseignée"}
-            {tuteur.quartier ? ` · ${tuteur.quartier}` : ""}
+            <FiMail className="h-3.5 w-3.5 text-slate-400" />
+            {tutor.email}
           </span>
-          {tuteur.dispo && (
-            <span className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-              <FiClock className="h-3.5 w-3.5" />
-              {tuteur.dispo}
-            </span>
-          )}
         </div>
       </header>
 
@@ -78,7 +53,7 @@ export default function TuteurDashboard({
         <Stat
           icon={<FiDollarSign className="h-4 w-4" />}
           periode="Total"
-          valeur={fcfa(stats.revenus)}
+          valeur={fcfa(tutor.revenus)}
           label="Revenus encaissés"
           lien="/tuteur/mes-seances"
           lienLabel="Voir mes séances"
@@ -87,7 +62,7 @@ export default function TuteurDashboard({
         <Stat
           icon={<FiInbox className="h-4 w-4" />}
           periode="Total"
-          valeur={String(stats.demandesRecues)}
+          valeur={String(tutor.received)}
           label="Demandes reçues"
           lien="/tuteur/mes-demandes"
           lienLabel="Consulter les demandes"
@@ -96,7 +71,7 @@ export default function TuteurDashboard({
         <Stat
           icon={<FiClock className="h-4 w-4" />}
           periode="À traiter"
-          valeur={String(stats.enAttente)}
+          valeur={String(tutor.pending)}
           label="En attente de réponse"
           lien="/tuteur/mes-demandes"
           lienLabel="Répondre maintenant"
@@ -105,7 +80,7 @@ export default function TuteurDashboard({
         <Stat
           icon={<FiCheckCircle className="h-4 w-4" />}
           periode="Total"
-          valeur={String(stats.acceptees)}
+          valeur={String(tutor.accepted)}
           label="Demandes acceptées"
           lien="/tuteur/mes-contrats"
           lienLabel="Voir mes contrats"
@@ -121,9 +96,9 @@ export default function TuteurDashboard({
             titre="Actions requises"
             sousTitre="Demandes en attente de votre réponse"
             icon={<FiAlertCircle className="h-4 w-4 text-rose-500" />}
-            compteur={aTraiter.length}
+            compteur={tutor.pending}
           >
-            {aTraiter.length === 0 ? (
+            {enAttente?.length === 0 ? (
               <div className="flex flex-col items-center gap-2 px-5 py-10 text-center">
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
                   <FiCheckCircle className="h-5 w-5" />
@@ -137,33 +112,33 @@ export default function TuteurDashboard({
               </div>
             ) : (
               <ul className="divide-y divide-slate-100">
-                {aTraiter.map(({ sollicitation: s, demande }) => (
+                {enAttente?.map((req) => (
                   <li
-                    key={s.idestsollicitee}
+                    key={req.id}
                     className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 transition-colors hover:bg-slate-50"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">
-                      {demande.utilisateur.prenom[0]}
-                      {demande.utilisateur.nom[0]}
+                      {req.student?.firstName[0] || ""}
+                      {req.student?.lastName[0] || ""}
                     </span>
                     <div className="min-w-48 flex-1">
                       <p className="text-sm font-semibold text-slate-900">
-                        {demande.utilisateur.prenom} {demande.utilisateur.nom}
+                        {req.student?.firstName} {req.student?.lastName}
                         <span className="font-normal text-slate-400"> · </span>
-                        {demande.classe.nomclasse}
+                        {req.student.level}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      {/* <p className="mt-0.5 text-xs text-slate-500">
                         {s.matiere.nomatiere} · {s.jourcours} {s.horairedeb} (
                         {s.duree})
-                        {demande.lieusouh ? ` · ${demande.lieusouh}` : ""}
-                      </p>
+                        {tutor.request[0]?.lieusouh ? ` · ${tutor.request[0]?.lieusouh}` : ""}
+                      </p> */}
                     </div>
-                    {s.montant && (
+                    {req.montant && (
                       <span
                         className="text-sm font-bold text-slate-900"
                         style={NUNITO}
                       >
-                        {fcfa(s.montant)}
+                        {fcfa(req.montant)}
                       </span>
                     )}
                     <Link
@@ -171,7 +146,7 @@ export default function TuteurDashboard({
                       className="group flex items-center gap-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-800"
                     >
                       Répondre
-                      <FiArrowRight className="h-3.5 w-3.5 transition-transform motion-safe:group-hover:translate-x-0.5" />
+
                     </Link>
                   </li>
                 ))}
@@ -179,7 +154,7 @@ export default function TuteurDashboard({
             )}
           </Carte>
 
-          <Carte
+          {/* <Carte
             titre="Prochaines séances"
             icon={<FiCalendar className="h-4 w-4" />}
             action={{ href: "/calendrier", label: "Calendrier complet" }}
@@ -235,7 +210,7 @@ export default function TuteurDashboard({
                 ))}
               </ul>
             )}
-          </Carte>
+          </Carte> */}
         </div>
 
         {/* Colonne laterale */}
@@ -264,16 +239,16 @@ export default function TuteurDashboard({
               />
             </div>
           </Panneau>
-          
+
           <Panneau titre="Mes enseignements">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Matières
             </p>
             <div className="mb-4 flex flex-wrap gap-1.5">
-              {matieres.length === 0 ? (
+              {tutor.sujets.length === 0 ? (
                 <p className="text-sm text-slate-400">Aucune matière.</p>
               ) : (
-                matieres.map((m) => (
+                tutor.sujets.map((m) => (
                   <Chip key={m} ton="marque">
                     {m}
                   </Chip>
@@ -285,10 +260,10 @@ export default function TuteurDashboard({
               Classes
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {classes.length === 0 ? (
+              {tutor.levels.length === 0 ? (
                 <p className="text-sm text-slate-400">Aucune classe.</p>
               ) : (
-                classes.map((c) => <Chip key={c}>{c}</Chip>)
+                tutor.levels.map((c) => <Chip key={c}>{c}</Chip>)
               )}
             </div>
           </Panneau>

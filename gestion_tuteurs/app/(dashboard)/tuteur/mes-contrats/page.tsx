@@ -4,7 +4,7 @@ import EnConstruction from "@/components/dashboard/EnConstruction";
 import { requireRole } from "@/lib/guards";
 
 export default async function MesContratsPage() {
-  await requireRole("enseignant");
+  await requireRole("tutor");
 
   return (
     <EnConstruction

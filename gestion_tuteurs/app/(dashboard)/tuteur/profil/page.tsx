@@ -1,3 +1,5 @@
+"use client";
+
 import {
   FiMapPin,
   FiClock,
@@ -11,41 +13,49 @@ import {
   FiInbox,
   FiDollarSign,
   FiEdit2,
+  FiStar
 } from "react-icons/fi";
 
-import { getTuteurDashboard } from "@/data/selectors";
-import { requireRole } from "@/lib/guards";
 import { fcfa } from "@/lib/format";
 import { Panneau, Chip,Champ,Piece,LigneStat } from "@/lib/function";
+import useTutorInfos from "@/hooks/useTutorInfos";
 const NUNITO = { fontFamily: "var(--font-nunito), sans-serif" };
 
 /* -------------------------------------------------------------------------- */
 
-export default async function ProfilPage() {
-  const session = await requireRole("enseignant");
-  const data = getTuteurDashboard(Number(session.user?.id));
+export default function ProfilPage() {
+  const { loading, error, tutorInfos: tuteur } = useTutorInfos();
 
-  if (!data) {
+  if(loading) {
+    return <p className="py-16 text-center text-sm text-slate-400">Chargement…</p>;
+  }
+  if(error) {
     return (
-      <p className="text-slate-500">
-        Aucune fiche tuteur pour le compte connecté.
-      </p>
+      <div className="py-16 text-center">
+        <p className="font-medium text-slate-700">
+          Impossible de charger le tableau de bord
+        </p>
+        <p className="mt-1 text-sm text-slate-400">{error}</p>
+      </div>
     );
   }
 
-  const { tuteur, matieres, classes, stats, seancesPassees,role } = data;
-  const u = tuteur.utilisateur;
+  const matieres = [...new Set(tuteur?.assignments.map((a) => a.subject.name))];
+  const classes = [...new Set(tuteur?.assignments.map((a) => a.level.name))];
+  const acceptees = tuteur?.applications.filter(
+    (a) => a.status === "ACCEPTED",
+  ).length;
 
   const champs = [
-    tuteur.ville,
-    tuteur.quartier,
-    tuteur.dispo,
-    tuteur.photo,
-    u.numtelsimpl,
-    u.numtelwh,
+    tuteur?.city,
+    tuteur?.district,
+    tuteur?.availability,
+    tuteur?.photo,
+    tuteur?.phone,
+    tuteur?.whatsapp,
   ];
   const remplis = champs.filter(Boolean).length;
-  const completude = Math.round((remplis / champs.length) * 100);
+  const completude = Math.round((remplis / champs.length) * 100)
 
   return (
     <div className="space-y-6">
@@ -67,8 +77,8 @@ export default async function ProfilPage() {
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl font-black backdrop-blur"
             style={NUNITO}
           >
-            {u.prenom[0]}
-            {u.nom[0]}
+            {tuteur?.firstName ? `${tuteur.firstName[0]}` : ""}
+            {tuteur?.lastName ? ` ${tuteur.lastName[0]}` : ""}
           </span>
 
           <div className="min-w-0 flex-1">
@@ -77,22 +87,22 @@ export default async function ProfilPage() {
                 className="text-2xl font-black tracking-tight sm:text-3xl"
                 style={NUNITO}
               >
-                {u.prenom} {u.nom}
+                {tuteur?.firstName} {tuteur?.lastName}
               </h1>
               <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold backdrop-blur">
-                {role}
+                Enseignant
               </span>
             </div>
 
             <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-brand-200">
               <span className="flex items-center gap-1.5">
                 <FiMapPin className="h-3.5 w-3.5" />
-                {tuteur.ville ?? "Ville non renseignée"}
-                {tuteur.quartier ? ` · ${tuteur.quartier}` : ""}
+                {tuteur?.city ?? "Ville non renseignée"}
+                {tuteur?.district ? ` · ${tuteur?.district}` : ""}
               </span>
               <span className="flex items-center gap-1.5">
                 <FiHash className="h-3.5 w-3.5" />
-                Compte n° {tuteur.idutilisateur}
+                Compte n° {tuteur?.userId}
               </span>
             </p>
 
@@ -137,38 +147,38 @@ export default async function ProfilPage() {
             <dl className="grid gap-3 p-5 sm:grid-cols-2">
               <Champ
                 label="Nom"
-                valeur={u.nom}
+                valeur={tuteur?.firstName}
                 icone={<FiUser className="h-4 w-4" />}
               />
               <Champ
                 label="Prénom"
-                valeur={u.prenom}
+                valeur={tuteur?.lastName}
                 icone={<FiUser className="h-4 w-4" />}
               />
               <Champ
                 label="Téléphone"
-                valeur={u.numtelsimpl}
+                valeur={tuteur?.phone}
                 icone={<FiPhone className="h-4 w-4" />}
               />
               <Champ
                 label="WhatsApp"
-                valeur={u.numtelwh}
+                valeur={tuteur?.whatsapp}
                 icone={<FiSmartphone className="h-4 w-4" />}
               />
               <Champ
                 label="Ville"
-                valeur={tuteur.ville}
+                valeur={tuteur?.city}
                 icone={<FiMapPin className="h-4 w-4" />}
               />
               <Champ
                 label="Quartier"
-                valeur={tuteur.quartier}
+                valeur={tuteur?.district}
                 icone={<FiMap className="h-4 w-4" />}
               />
               <div className="sm:col-span-2">
                 <Champ
                   label="Disponibilités"
-                  valeur={tuteur.dispo}
+                  valeur={tuteur?.availability}
                   icone={<FiClock className="h-4 w-4" />}
                 />
               </div>
@@ -226,24 +236,28 @@ export default async function ProfilPage() {
           <Panneau titre="Statistiques">
             <div className="divide-y divide-slate-100">
               <LigneStat
-                icone={<FiCheckCircle className="h-4 w-4" />}
+                icone={<FiStar className="h-4 w-4" />}
                 label="Séances effectuées"
-                valeur={String(seancesPassees.length)}
+                valeur={
+                  tuteur?.averageRating === null
+                    ? "—"
+                    : `${tuteur?.averageRating} / 5 (${tuteur?.reviewsCount} avis)`
+                }
               />
               <LigneStat
                 icone={<FiInbox className="h-4 w-4" />}
                 label="Demandes reçues"
-                valeur={String(stats.demandesRecues)}
+                valeur={String(tuteur?.applications.length)}
               />
               <LigneStat
                 icone={<FiCheckCircle className="h-4 w-4" />}
                 label="Demandes acceptées"
-                valeur={String(stats.acceptees)}
+                valeur={String(acceptees)}
               />
               <LigneStat
                 icone={<FiDollarSign className="h-4 w-4" />}
                 label="Revenus encaissés"
-                valeur={fcfa(stats.revenus)}
+                valeur={fcfa(tuteur?.revenus)}
               />
             </div>
           </Panneau>
@@ -253,29 +267,29 @@ export default async function ProfilPage() {
               <Piece
                 label="Photo de profil"
                 detail={
-                  tuteur.photo
+                  tuteur?.photo
                     ? "Fournie"
                     : "Les fiches avec photo sont plus consultées"
                 }
-                fournie={Boolean(tuteur.photo)}
+                fournie={Boolean(tuteur?.photo)}
               />
               <Piece
                 label="Coordonnées téléphoniques"
                 detail={
-                  u.numtelsimpl || u.numtelwh
+                  tuteur?.phone || tuteur?.whatsapp
                     ? "Renseignées"
                     : "Indispensables pour être contacté"
                 }
-                fournie={Boolean(u.numtelsimpl || u.numtelwh)}
+                fournie={Boolean(tuteur?.phone || tuteur?.whatsapp)}
               />
               <Piece
                 label="Zone d'intervention"
                 detail={
-                  tuteur.ville
+                  tuteur?.city
                     ? "Renseignée"
                     : "Aide les familles proches à vous trouver"
                 }
-                fournie={Boolean(tuteur.ville)}
+                fournie={Boolean(tuteur?.city)}
               />
             </div>
           </Panneau>

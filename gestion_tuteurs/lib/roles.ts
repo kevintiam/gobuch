@@ -1,7 +1,7 @@
-export type Role = "eleve" | "enseignant" | "admin";
+export type Role = "eleve" | "tutor" | "admin";
 
 export const HOME_BY_ROLE: Record<Role, string> = {
-  enseignant: "/tuteur",
+  tutor: "/tuteur",
   admin: "/tuteurs",
   eleve: "/eleve",
 };

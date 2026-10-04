@@ -1,5 +1,5 @@
 
-export type Role = "eleve" | "enseignant" | "admin";
+export type Role = "eleve" | "tutor" | "admin";
 
 /** Codes stockes en base par Demande/Seance (voir app/(dashboard)/demandes). */
 export type Decision = "0" | "1" | "2";
@@ -34,7 +34,7 @@ export type Tuteur = {
   dispo: string | null;
   utilisateur: Pick<
     User,
-    "idutilisateur" | "nom" | "prenom" | "numtelsimpl" | "numtelwh"
+    "idutilisateur" | "nom" | "prenom" | "email" | "numtelsimpl" | "numtelwh"
   >;
   ensmatclas: {
     idensmatclas: number;
@@ -147,16 +147,16 @@ export const USERS: User[] = [
     motpasse: "tuteur123",
     numtelsimpl: "699887766",
     numtelwh: "699887766",
-    role: "enseignant",
+    role: "tutor",
   },
   {
     idutilisateur: 11,
     nom: "Fotso",
     prenom: "Bertrand",
-    email: "bertrand.fotso",
+    email: "bertrand.fotso@gmail.com",
     motpasse: "tuteur123",
     numtelsimpl: "678332211",
-    role: "enseignant",
+    role: "tutor",
   },
   {
     idutilisateur: 99,
@@ -191,6 +191,7 @@ export const TUTEURS: Tuteur[] = [
       idutilisateur: 10,
       nom: "Mbarga",
       prenom: "Amina",
+      email: "amina.mbarga@gobuch.cm",
       numtelsimpl: "699887766",
       numtelwh: "699887766",
     },
@@ -210,6 +211,7 @@ export const TUTEURS: Tuteur[] = [
       idutilisateur: 11,
       nom: "Fotso",
       prenom: "Bertrand",
+      email: "bertrand.fotso@gobuch.cm",
       numtelsimpl: "678332211",
       numtelwh: undefined,
     },

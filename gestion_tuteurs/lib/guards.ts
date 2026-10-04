@@ -11,7 +11,7 @@ import { homeForRole, type Role } from "./roles";
 
 function roleDe(session: unknown): Role | null {
   const role = (session as { user?: { role?: string } } | null)?.user?.role;
-  return role === "eleve" || role === "enseignant" || role === "admin"
+  return role === "eleve" || role === "tutor" || role === "admin"
     ? role
     : null;
 }

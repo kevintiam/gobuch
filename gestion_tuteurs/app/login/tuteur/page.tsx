@@ -13,7 +13,7 @@ export default function LoginTuteurPage() {
       title="Espace tuteurs 👩‍🏫"
       subtitle="Retrouve tes élèves, tes demandes et tes séances."
       identifierLabel="Nom d'utilisateur ou e-mail professionnel"
-      identifierPlaceholder="nomutilisateur ou adresse e-mail"
+      emailPlaceholder="nomutilisateur ou adresse e-mail"
       footerSlot={
         <>
           <p className="text-center text-sm text-slate-500 mt-6">

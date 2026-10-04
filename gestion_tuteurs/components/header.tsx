@@ -1,7 +1,13 @@
 "use client";
 import { FiMenu, FiSearch, FiClock, FiBell } from "react-icons/fi";
 
-export default function Header({ onMenuClick, role }) {
+export default function Header({
+  onMenuClick,
+  role,
+}: {
+  onMenuClick?: () => void;
+  role?: string;
+}) {
   return (
     <header className="flex items-center gap-4 px-4 lg:px-6 py-5 bg-white border-b border-slate-200 sticky top-0 z-20">
       <button

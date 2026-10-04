@@ -1,84 +1,114 @@
-// Vues derivees des donnees factices : regroupe, pour un tuteur donne, ce que
-// son tableau de bord affiche. Les sollicitations ne portent que le nom et le
-// prenom de l'enseignant (c'est la forme renvoyee par /api/demandes), on
-// rapproche donc sur ces deux champs.
-import {
-  TUTEURS,
-  DEMANDES,
-  SEANCES,
-  type Tuteur,
-  type Demande,
-  type Seance,
-  type Sollicitation,
-} from "./mockData";
-
-export type SollicitationAvecDemande = {
-  sollicitation: Sollicitation;
-  demande: Demande;
-};
+import { type TutorInfos } from "@/app/types";
 
 export type TuteurDashboard = {
-  tuteur: Tuteur;
-  matieres: string[];
-  classes: string[];
-  sollicitations: SollicitationAvecDemande[];
-  seancesAVenir: Seance[];
-  seancesPassees: Seance[];
-  // role:string;
-  stats: {
-    demandesRecues: number;
-    enAttente: number;
-    acceptees: number;
-    revenus: number;
+  name: string;
+  genre: string | null;
+  email: string;
+  sujets: string[];
+  levels: string[];
+  photo: string | null;
+  availability: string | null;
+  revenus: number;
+  assignments: {
+    id: number;
+    subject: string;
+  }[] | null;
+  received: number;
+  applications: {
+    id: number;
+    status: "PENDING" | "ACCEPTED" | "DECLINED";
+    createdAt: string;
+  }[];
+  accepted: number;
+  pending: number;
+  declined: number;
+  request: {
+    id: number;
+    applicationId: number;
+    applicationStatus: "PENDING" | "ACCEPTED" | "DECLINED";
+    status: "OPEN" | "FULFILLED" | "CANCELLED";
+    createdAt: string;
+    montant: number;
+    subject: string;
+    day: string | null;
+    time: string | null;
+    duration: number | null;
+    gender: "MALE" | "FEMALE" | null;
+    place: string | null;
+    student: {
+      id: number;
+      firstName: string;
+      lastName: string;
+      level: string;
+    };
+  }[];
+  montant: number;
+};
+
+export const formatTutorDashboard = (data: TutorInfos|null) : TuteurDashboard | null => {
+  if(!data) return null;
+
+    const compter = (status: TuteurDashboard["applications"][number]["status"]) =>
+    data.applications.filter((application) => application.status === status)
+      .length;
+
+  return {
+    name: `${data?.firstName} ${data?.lastName}`,
+    genre: data?.gender,
+    email: data?.email,
+    photo: data?.photo,
+    availability: data?.availability,
+    revenus: data?.revenus,
+    sujets: [
+      ...new Set(data?.assignments.map((a) => a.subject.name)),
+    ],
+    levels: [
+      ...new Set(data?.assignments.map((a) => a.level.name)),
+    ],
+    assignments: data?.assignments.map((a) => ({
+      id: a.id,
+      subject: a.subject.name,
+    })),
+    received: data?.applications.length,
+    applications: data?.applications.map((ap) => ({
+      id: ap.id,
+      status: ap.status,
+      createdAt: ap.createdAt,
+    })),
+    request: data.request.map((request) => ({
+      id: request.id,
+      applicationId: request.applicationId,
+      applicationStatus: request.applicationStatus,
+      status: request.status,
+      createdAt: request.createdAt,
+      montant: request.montantOffert,
+      subject: request.subject,
+      day: request.day,
+      time: request.time,
+      duration: request.duration,
+      gender: request.gender,
+      place: request.place,
+      student: {
+        id: request.student.id,
+        firstName: request.student.firstName,
+        lastName: request.student.lastName,
+        level: request.student.level.name,
+      },
+    })),
+    accepted: compter("ACCEPTED"),
+    pending: compter("PENDING"),
+    declined: compter("DECLINED"),
+        montant: data.request.reduce((total, request) => total + request.montantOffert, 0),
+
   };
 };
 
-const memeEnseignant = (
-  t: Tuteur,
-  e: { utilisateur: { nom: string; prenom: string } },
-) =>
-  e.utilisateur.nom === t.utilisateur.nom &&
-  e.utilisateur.prenom === t.utilisateur.prenom;
-
-export function getTuteurDashboard(
-  idutilisateur: number,
-  aujourdhui = new Date().toISOString().slice(0, 10),
-): TuteurDashboard | null {
-  const tuteur = TUTEURS.find((t) => t.idutilisateur === idutilisateur);
-  if (!tuteur) return null;
-
-  const sollicitations: SollicitationAvecDemande[] = DEMANDES.flatMap(
-    (demande) =>
-      demande.estsollicitee
-        .filter((s) => memeEnseignant(tuteur, s.enseignant))
-        .map((sollicitation) => ({ sollicitation, demande })),
-  );
-
-  const idsSollicitations = new Set(
-    sollicitations.map(({ sollicitation }) => sollicitation.idestsollicitee),
-  );
-  const seances = SEANCES.filter((s) =>
-    idsSollicitations.has(s.estsollicitee.idestsollicitee),
-  );
-
-  return {
-    tuteur,
-    matieres: [...new Set(tuteur.ensmatclas.map((e) => e.matiere.nomatiere))],
-    classes: [...new Set(tuteur.ensmatclas.map((e) => e.classe.nomclasse))],
-    sollicitations,
-    seancesAVenir: seances.filter((s) => (s.dateseance ?? "") >= aujourdhui),
-    seancesPassees: seances.filter((s) => (s.dateseance ?? "") < aujourdhui),
-    // role:tuteur.utilisateur.role,
-    stats: {
-      demandesRecues: sollicitations.length,
-      enAttente: sollicitations.filter((s) => s.sollicitation.decision === "0")
-        .length,
-      acceptees: sollicitations.filter((s) => s.sollicitation.decision === "1")
-        .length,
-      // Seules les seances validees sont comptees comme encaissees.
-      revenus: seances
-        .filter((s) => s.decisionsea === "1")
-        .reduce((total, s) => total + Number(s.total ?? 0), 0),
-    },
-  };
-}
+export const formatDuree = (minutes: number | null) => {
+  if (!minutes) return null;
+  const heures = Math.floor(minutes / 60);
+  const reste = minutes % 60;
+  if (heures === 0) return `${reste} min`;
+  return reste === 0
+    ? `${heures} h`
+    : `${heures} h ${String(reste).padStart(2, "0")}`;
+};

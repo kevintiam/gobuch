@@ -90,14 +90,18 @@ export const levels = [
   "5ème",
   "4ème",
   "3ème",
-  "2nde",
-  "1ère",
+  "2nde A",
+  "2nde C",
+  "1ère A",
+  "1ère C",
+  "1ère D",
   "Terminale A",
   "Terminale C",
   "Terminale D",
   "Terminale E",
   "Terminale F",
 ];
+
 export const regions = [
   "Centre",
   "Littoral",
@@ -110,3 +114,10 @@ export const regions = [
   "Nord",
   "Sud",
 ];
+
+export const TONS = {
+  brand: "bg-brand-50 text-brand-600",
+  amber: "bg-amber-50 text-amber-600",
+  emerald: "bg-emerald-50 text-emerald-600",
+  rose: "bg-rose-50 text-rose-600",
+} as const;

@@ -44,7 +44,7 @@ function Liste({ seances }: { seances: Seance[] }) {
 }
 
 export default async function MesSeancesPage() {
-  const session = await requireRole("enseignant");
+  const session = await requireRole("tutor");
   const data = getTuteurDashboard(Number(session.user?.id));
 
   if (!data) {
